@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOOD-1 Plant Swap Calculator v2 | DREAM-CV Lab</title>
+<style>
+  :root { --green: #1b6e2a; --green-light: #e8f5e9; --green-mid: #a5d6a7; --amber: #ef8c00; --amber-light: #fff8e1; --red: #c62828; --text: #1a1a2e; --gray: #6b7280; --bg: #f7faf7; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+  .hero { background: linear-gradient(160deg, #0d3b0f 0%, #1b6e2a 50%, #2e8b3e 100%); color: white; padding: 40px 24px 48px; text-align: center; position: relative; overflow: hidden; }
+  .hero::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 40px; background: var(--bg); border-radius: 40px 40px 0 0; }
+  .hero h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .hero .sub { font-size: 14px; opacity: 0.85; margin-top: 8px; max-width: 500px; margin-left: auto; margin-right: auto; }
+  .hero .trial-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); padding: 6px 16px; border-radius: 24px; font-size: 12px; margin-top: 16px; font-weight: 500; }
+
+  .wrap { max-width: 680px; margin: -20px auto 0; padding: 0 16px 40px; position: relative; z-index: 1; }
+
+  .card { background: white; border-radius: 20px; padding: 28px 24px; margin-bottom: 16px; box-shadow: 0 1px 8px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.03); }
+  .card-title { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--green); margin-bottom: 20px; }
+
+  /* Profile pills */
+  .pill-row { margin-bottom: 16px; }
+  .pill-label { font-size: 12px; font-weight: 600; color: var(--gray); margin-bottom: 6px; }
+  .pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill { padding: 8px 18px; border-radius: 24px; border: 2px solid #e0e0e0; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: white; color: var(--gray); }
+  .pill.active { border-color: var(--green); background: var(--green-light); color: var(--green); }
+  .pill:hover { border-color: var(--green-mid); }
+
+  /* Swap control */
+  .swap-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .swap-num { font-size: 48px; font-weight: 900; color: var(--green); line-height: 1; }
+  .swap-label { font-size: 13px; color: var(--gray); }
+  input[type="range"] { width: 100%; height: 6px; -webkit-appearance: none; background: linear-gradient(90deg, var(--green-mid), var(--green)); border-radius: 3px; outline: none; margin: 16px 0; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; background: white; border: 3px solid var(--green); border-radius: 50%; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 16px 0; }
+  .day { text-align: center; }
+  .day-label { font-size: 10px; color: var(--gray); margin-bottom: 4px; }
+  .meal { width: 100%; aspect-ratio: 1; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; transition: all 0.3s; }
+  .meal.meat { background: #fce4ec; }
+  .meal.plant { background: #e8f5e9; }
+  .meal.other { background: #f5f5f5; }
+  .meal-sub { font-size: 8px; margin-top: 2px; color: var(--gray); }
+
+  /* Results */
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .result-box { border-radius: 16px; padding: 20px 16px; text-align: center; }
+  .result-box.good { background: var(--green-light); }
+  .result-box.caution { background: var(--amber-light); }
+  .result-box.neutral { background: #f3f4f6; }
+  .result-val { font-size: 32px; font-weight: 900; line-height: 1.1; }
+  .result-val.green { color: var(--green); }
+  .result-val.amber { color: var(--amber); }
+  .result-val.gray { color: #9ca3af; }
+  .result-ci { font-size: 11px; color: var(--gray); margin-top: 2px; font-weight: 500; }
+  .result-name { font-size: 12px; color: var(--gray); margin-top: 6px; font-weight: 600; }
+  .result-p { font-size: 10px; color: var(--gray); font-style: italic; }
+  .full-span { grid-column: 1 / -1; }
+
+  /* Forest plot style */
+  .forest { margin: 20px 0; }
+  .forest-row { display: flex; align-items: center; margin-bottom: 12px; }
+  .forest-label { width: 110px; font-size: 12px; font-weight: 600; color: var(--text); text-align: right; padding-right: 12px; flex-shrink: 0; }
+  .forest-track { flex: 1; height: 32px; position: relative; background: #f9f9f9; border-radius: 8px; overflow: visible; }
+  .forest-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #ccc; z-index: 1; }
+  .forest-ci { position: absolute; top: 50%; height: 3px; background: var(--green); transform: translateY(-50%); border-radius: 2px; z-index: 2; transition: all 0.5s; }
+  .forest-ci.amber-line { background: var(--amber); }
+  .forest-point { position: absolute; top: 50%; width: 14px; height: 14px; background: var(--green); border-radius: 50%; transform: translate(-50%, -50%); z-index: 3; border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: all 0.5s; }
+  .forest-point.amber-dot { background: var(--amber); }
+  .forest-info { width: 100px; font-size: 11px; color: var(--gray); padding-left: 8px; flex-shrink: 0; }
+  .forest-info strong { color: var(--text); }
+
+  /* Insight */
+  .insight-box { border-radius: 16px; padding: 20px; margin-top: 16px; font-size: 13px; line-height: 1.7; }
+  .insight-box.green { background: var(--green-light); color: #1b5e20; border: 1px solid #c8e6c9; }
+  .insight-box.amber { background: var(--amber-light); color: #e65100; border: 1px solid #ffe0b2; }
+  .insight-box .insight-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+
+  .paradox-box { background: linear-gradient(135deg, #fff3e0, #fce4ec); border-radius: 16px; padding: 20px; margin-top: 16px; border: 1px solid #ffccbc; }
+  .paradox-box .title { font-weight: 700; font-size: 14px; color: #bf360c; margin-bottom: 8px; }
+  .paradox-box p { font-size: 13px; color: #4e342e; line-height: 1.6; }
+  .paradox-stat { display: inline-block; background: white; padding: 2px 10px; border-radius: 8px; font-weight: 700; font-size: 12px; margin: 2px; }
+
+  .footer { text-align: center; padding: 24px 16px; font-size: 11px; color: #999; line-height: 1.6; }
+  .footer strong { color: #666; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Plant Swap Calculator</h1>
+  <div class="sub">Estimate how swapping red meat for plant-based meals affects your cardiovascular biomarkers</div>
+  <div class="trial-badge">&#127793; Based on the FOOD-1 Trial &middot; Ferreira, Sharma et al. 2026</div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <div class="card-title">Your Profile</div>
+    <div class="pill-row">
+      <div class="pill-label">Sex</div>
+      <div class="pills" data-group="sex">
+        <div class="pill active" data-val="female" onclick="pick(this)">Female</div>
+        <div class="pill" data-val="male" onclick="pick(this)">Male</div>
+      </div>
+    </div>
+    <div class="pill-row">
+      <div class="pill-label">Age</div>
+      <div class="pills" data-group="age">
+        <div class="pill" data-val="younger" onclick="pick(this)">Under 51</div>
+        <div class="pill active" data-val="older" onclick="pick(this)">51+</div>
+      </div>
+    </div>
+    <div class="pill-row">
+      <div class="pill-label">Diabetes</div>
+      <div class="pills" data-group="dm">
+        <div class="pill active" data-val="no" onclick="pick(this)">No</div>
+        <div class="pill" data-val="yes" onclick="pick(this)">Yes</div>
+      </div>
+    </div>
+    <div class="pill-row">
+      <div class="pill-label">Hypertension</div>
+      <div class="pills" data-group="htn">
+        <div class="pill active" data-val="no" onclick="pick(this)">No</div>
+        <div class="pill" data-val="yes" onclick="pick(this)">Yes</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Meals Per Week</div>
+    <div class="swap-header">
+      <div>
+        <div class="swap-num" id="swapNum">0</div>
+        <div class="swap-label">meals swapped to plant-based</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:13px; color:var(--gray);">out of <strong id="meatNum">7</strong> red meat meals</div>
+      </div>
+    </div>
+    <input type="range" id="swapSlider" min="0" max="14" value="0" oninput="update()">
+    <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--gray); margin-top:-8px;">
+      <span>No change</span><span>Full plant-based</span>
+    </div>
+
+    <div class="week-grid" id="weekGrid"></div>
+  </div>
+
+  <div class="card" id="resultsCard">
+    <div class="card-title">Expected Biomarker Changes</div>
+    <div id="noSwap" style="text-align:center; padding:32px 0; color:var(--gray); font-size:14px;">
+      Slide above to swap meals and see your estimated changes
+    </div>
+    <div id="results" style="display:none;">
+
+      <div class="forest" id="forestPlot">
+        <!-- Dynamically filled -->
+      </div>
+
+      <div class="result-grid">
+        <div class="result-box good" id="ldlBox">
+          <div class="result-val green" id="ldlVal">--</div>
+          <div class="result-ci" id="ldlCI"></div>
+          <div class="result-name">LDL Cholesterol</div>
+          <div class="result-p" id="ldlP"></div>
+        </div>
+        <div class="result-box good" id="tmaoBox">
+          <div class="result-val green" id="tmaoVal">--</div>
+          <div class="result-ci" id="tmaoCI"></div>
+          <div class="result-name">TMAO</div>
+          <div class="result-p" id="tmaoP"></div>
+        </div>
+        <div class="result-box caution" id="bnpBox">
+          <div class="result-val amber" id="bnpVal">--</div>
+          <div class="result-ci" id="bnpCI"></div>
+          <div class="result-name">NT-proBNP</div>
+          <div class="result-p" id="bnpP"></div>
+        </div>
+        <div class="result-box neutral">
+          <div class="result-val gray" id="respRate">--</div>
+          <div class="result-ci"></div>
+          <div class="result-name">Dual Responder Rate</div>
+          <div class="result-p">LDL + TMAO both decrease</div>
+        </div>
+      </div>
+
+      <div id="insightArea"></div>
+
+      <div class="paradox-box" id="paradoxBox" style="display:none;">
+        <div class="title">The FOOD-1 Paradox</div>
+        <p>In the trial, <span class="paradox-stat">51%</span> of participants were "dual responders" whose LDL and TMAO both improved on the plant diet. Paradoxically, these same responders showed the <em>largest</em> NT-proBNP increase <span class="paradox-stat">+0.35 log units, p=0.005</span> vs non-responders <span class="paradox-stat">+0.02, p=0.83</span>.</p>
+        <p style="margin-top:8px;">This likely reflects transient sodium/volume effects from processed plant products, not cardiac harm. Adherence was identical between groups (5% deviation rate in both).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <strong>Research Tool &mdash; Not Medical Advice</strong><br>
+    FOOD-1: Randomized crossover trial, n=41, 2-week periods. Ferreira JP, Marques P, Zhang G, Possik E, Mavrakanas TA, Tsoukas MA, <strong>Sharma A.</strong><br>
+    <em>Scientific Reports</em> 2026. doi: 10.1038/s41598-026-41165-3<br>
+    Individual results will vary. Consult your healthcare provider.<br>
+    &copy; 2026 DREAM-CV Lab &middot; McGill University
+  </div>
+</div>
+
+<script>
+// FOOD-1 subgroup data: [mean_change, CI_low, CI_high, p_value, n]
+// LDL in mg/dL (converted from mmol/L * 38.67)
+const DATA = {
+  ldl: {
+    overall:     { d: -6.0,  lo: -10.1, hi: -2.0, p: 0.003, n: 39 },
+    female:      { d: -10.8, lo: -17.8, hi: -3.8, p: 0.003, n: 19 },
+    male:        { d: -1.5,  lo: -6.6,  hi: 3.5,  p: 0.55,  n: 20 },
+    non_diabetic:{ d: -7.3,  lo: -12.3, hi: -2.3, p: 0.003, n: 30 },
+    diabetic:    { d: -0.4,  lo: -10.4, hi: 9.7,  p: 0.94,  n: 9 },
+    no_htn:      { d: -7.3,  lo: -12.7, hi: -2.0, p: 0.007, n: 28 },
+    htn:         { d: -1.9,  lo: -7.3,  hi: 3.5,  p: 0.47,  n: 11 }
+  },
+  // NT-proBNP log change (we'll convert to % for display)
+  bnp: {
+    overall:     { d: 0.20, lo: 0.04, hi: 0.35, p: 0.012, n: 41 },
+    female:      { d: 0.26, lo: 0.03, hi: 0.48, p: 0.027, n: 19 },
+    male:        { d: 0.14, lo:-0.07, hi: 0.35, p: 0.18,  n: 22 },
+    non_diabetic:{ d: 0.18, lo: 0.04, hi: 0.32, p: 0.010, n: 31 },
+    diabetic:    { d: 0.25, lo:-0.29, hi: 0.79, p: 0.37,  n: 9 },
+    older:       { d: 0.29, lo: 0.06, hi: 0.53, p: 0.015, n: 21 },
+    younger:     { d: 0.09, lo:-0.10, hi: 0.28, p: 0.34,  n: 20 },
+    no_htn:      { d: 0.18, lo: 0.00, hi: 0.36, p: 0.052, n: 28 },
+    htn:         { d: 0.21, lo:-0.14, hi: 0.56, p: 0.24,  n: 11 }
+  }
+};
+
+const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function getProfile() {
+  const get = g => document.querySelector(`.pills[data-group="${g}"] .pill.active`).dataset.val;
+  return { sex: get('sex'), age: get('age'), dm: get('dm'), htn: get('htn') };
+}
+
+function pick(el) {
+  el.parentElement.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  update();
+}
+
+function logToPercent(logVal) {
+  return (Math.exp(logVal) - 1) * 100;
+}
+
+function fmtP(p) {
+  if (p < 0.001) return 'p<0.001';
+  if (p < 0.01) return 'p=' + p.toFixed(3);
+  return 'p=' + p.toFixed(p < 0.1 ? 3 : 2);
+}
+
+function buildForest(items, containerId) {
+  // items: [{label, d, lo, hi, color}]
+  // Scale: find min/max across all CIs
+  let min = -15, max = 5;
+  items.forEach(it => { min = Math.min(min, it.lo); max = Math.max(max, it.hi); });
+  const range = max - min;
+  const pad = range * 0.15;
+  min -= pad; max += pad;
+  const totalRange = max - min;
+
+  const toPercent = v => ((v - min) / totalRange) * 100;
+  const zeroPos = toPercent(0);
+
+  let html = '';
+  items.forEach(it => {
+    const ptPos = toPercent(it.d);
+    const ciLeft = toPercent(it.lo);
+    const ciRight = toPercent(it.hi);
+    const colorClass = it.color === 'amber' ? 'amber-line' : '';
+    const dotClass = it.color === 'amber' ? 'amber-dot' : '';
+
+    html += `<div class="forest-row">
+      <div class="forest-label">${it.label}</div>
+      <div class="forest-track">
+        <div class="forest-zero" style="left:${zeroPos}%"></div>
+        <div class="forest-ci ${colorClass}" style="left:${ciLeft}%;width:${ciRight-ciLeft}%"></div>
+        <div class="forest-point ${dotClass}" style="left:${ptPos}%"></div>
+      </div>
+      <div class="forest-info"><strong>${it.d > 0 ? '+' : ''}${it.d.toFixed(1)}</strong> ${it.unit}</div>
+    </div>`;
+  });
+
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function update() {
+  const prof = getProfile();
+  const swaps = parseInt(document.getElementById('swapSlider').value);
+  document.getElementById('swapNum').textContent = swaps;
+  document.getElementById('meatNum').textContent = 14 - swaps;
+
+  // Week grid
+  const grid = document.getElementById('weekGrid');
+  let gridHtml = '';
+  for (let i = 0; i < 7; i++) {
+    const d = days[i];
+    const isPlant1 = i * 2 < swaps;
+    const isPlant2 = i * 2 + 1 < swaps;
+    gridHtml += `<div class="day">
+      <div class="day-label">${d}</div>
+      <div class="meal ${isPlant1 ? 'plant' : (i*2 < 14 ? 'meat' : 'other')}" style="margin-bottom:4px;">
+        ${isPlant1 ? '&#127793;' : '&#127830;'}
+        <div class="meal-sub">${isPlant1 ? 'Plant' : 'Meat'}</div>
+      </div>
+      <div class="meal ${isPlant2 ? 'plant' : (i*2+1 < 14 ? 'meat' : 'other')}">
+        ${isPlant2 ? '&#127793;' : '&#127830;'}
+        <div class="meal-sub">${isPlant2 ? 'Plant' : 'Meat'}</div>
+      </div>
+    </div>`;
+  }
+  grid.innerHTML = gridHtml;
+
+  if (swaps === 0) {
+    document.getElementById('noSwap').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    return;
+  }
+  document.getElementById('noSwap').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  // Scale factor: trial was full swap (14/14 meals). User is swapping swaps/14.
+  const scale = swaps / 14;
+
+  // Get best matching subgroup for LDL (sex is the strongest interaction p=0.020)
+  const ldlKey = prof.sex === 'female'
+    ? (prof.dm === 'no' ? 'non_diabetic' : 'diabetic')  // female non-DM is strongest
+    : 'male';
+  // But if sex=female and dm=no, use female (stronger signal)
+  const ldlData = prof.sex === 'female' ? DATA.ldl.female : DATA.ldl.male;
+  // Also layer in DM effect
+  const ldlDM = prof.dm === 'yes' ? DATA.ldl.diabetic : null;
+
+  // For display, use the most relevant subgroup
+  let ldl = { ...ldlData };
+  if (prof.dm === 'yes') ldl = { ...DATA.ldl.diabetic };
+  else if (prof.sex === 'female') ldl = { ...DATA.ldl.female };
+  else ldl = { ...DATA.ldl.male };
+
+  const ldlScaled = { d: ldl.d * scale, lo: ldl.lo * scale, hi: ldl.hi * scale, p: ldl.p, n: ldl.n };
+
+  // BNP: age is the main differentiator
+  let bnp;
+  if (prof.age === 'older') bnp = { ...DATA.bnp.older };
+  else bnp = { ...DATA.bnp.younger };
+
+  const bnpScaled = { d: bnp.d * scale, lo: bnp.lo * scale, hi: bnp.hi * scale, p: bnp.p, n: bnp.n };
+  const bnpPct = logToPercent(bnpScaled.d);
+  const bnpPctLo = logToPercent(bnpScaled.lo);
+  const bnpPctHi = logToPercent(bnpScaled.hi);
+
+  // Display LDL — show relative % change as primary, absolute as secondary
+  // Baseline mean LDL on meat diet ~94.7 mg/dL (2.45 mmol/L) from FOOD-1
+  const baseLDL = 94.7;
+  const ldlPct = (ldlScaled.d / baseLDL) * 100;
+  const ldlPctLo = (ldlScaled.lo / baseLDL) * 100;
+  const ldlPctHi = (ldlScaled.hi / baseLDL) * 100;
+
+  document.getElementById('ldlVal').textContent = (ldlPct > 0 ? '+' : '') + ldlPct.toFixed(1) + '%';
+  document.getElementById('ldlCI').textContent = ldlScaled.d.toFixed(1) + ' mg/dL (CI: ' + ldlScaled.lo.toFixed(1) + ' to ' + ldlScaled.hi.toFixed(1) + ')';
+  document.getElementById('ldlP').textContent = fmtP(ldl.p) + ' (n=' + ldl.n + ')';
+
+  // TMAO
+  document.getElementById('tmaoVal').textContent = 'Reduced';
+  document.getElementById('tmaoCI').textContent = 'Significant reduction in FOOD-1';
+  document.getElementById('tmaoP').textContent = 'Consistent across all subgroups';
+
+  // BNP — already in relative % (converted from log)
+  document.getElementById('bnpVal').textContent = '+' + bnpPct.toFixed(0) + '% relative';
+  document.getElementById('bnpCI').textContent = 'CI: ' + (bnpPctLo > 0 ? '+' : '') + bnpPctLo.toFixed(0) + '% to +' + bnpPctHi.toFixed(0) + '% (log: +' + bnpScaled.d.toFixed(2) + ')';
+  document.getElementById('bnpP').textContent = fmtP(bnp.p) + ' (n=' + bnp.n + ', age ' + prof.age + ')';
+
+  // Responder rate
+  document.getElementById('respRate').textContent = '51%';
+
+  // Forest plot
+  const forestItems = [
+    { label: 'LDL-C', d: ldlPct, lo: ldlPctLo, hi: ldlPctHi, color: 'green', unit: '%' },
+    { label: 'NT-proBNP', d: bnpPct, lo: bnpPctLo, hi: bnpPctHi, color: 'amber', unit: '%' },
+  ];
+  buildForest(forestItems, 'forestPlot');
+
+  // Insight
+  const area = document.getElementById('insightArea');
+  let insight = '';
+
+  if (prof.sex === 'female' && prof.dm === 'no') {
+    insight = `<div class="insight-box green">
+      <div class="insight-title">Strong Responder Profile</div>
+      Non-diabetic women showed the strongest LDL benefit in FOOD-1 (-10.8 mg/dL, p=0.003) with a significant sex interaction (p=0.020). TMAO reduction was also robust. This profile had the highest dual-responder rate in the trial.
+    </div>`;
+  } else if (prof.sex === 'male') {
+    insight = `<div class="insight-box amber">
+      <div class="insight-title">Moderate Responder Profile</div>
+      In FOOD-1, men showed a smaller, non-significant LDL reduction (-1.5 mg/dL, p=0.55). However, TMAO decreased equally in both sexes (interaction p=0.67), so cardiovascular benefit likely occurs through gut microbiome pathways rather than cholesterol lowering.
+    </div>`;
+  } else if (prof.dm === 'yes') {
+    insight = `<div class="insight-box amber">
+      <div class="insight-title">Limited LDL Response Expected</div>
+      Diabetic participants in FOOD-1 showed minimal LDL change (-0.4 mg/dL, p=0.94). The diabetes interaction trended toward significance (p=0.088). Benefits may come primarily through TMAO reduction. Discuss dietary changes with your diabetes care team.
+    </div>`;
+  } else if (prof.htn === 'yes') {
+    insight = `<div class="insight-box amber">
+      <div class="insight-title">Modest Response Expected</div>
+      Participants with hypertension showed a smaller LDL effect (-1.9 mg/dL, p=0.47) compared to normotensives (-7.3 mg/dL, p=0.007). Sodium content in processed plant-based products is worth monitoring, especially given the NT-proBNP signal.
+    </div>`;
+  } else {
+    insight = `<div class="insight-box green">
+      <div class="insight-title">Good Responder Profile</div>
+      Your profile matches the subgroup with significant LDL benefit in FOOD-1. Non-hypertensive, non-diabetic participants showed a mean -7.3 mg/dL reduction (p=0.007) with consistent TMAO improvement.
+    </div>`;
+  }
+  area.innerHTML = insight;
+
+  // Show paradox box when swaps > 3
+  document.getElementById('paradoxBox').style.display = swaps >= 4 ? 'block' : 'none';
+}
+
+// Init
+update();
+</script>
+</body>
+</html>
