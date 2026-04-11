@@ -172,12 +172,6 @@
           <div class="result-name">TMAO</div>
           <div class="result-p" id="tmaoP"></div>
         </div>
-        <div class="result-box caution" id="bnpBox">
-          <div class="result-val amber" id="bnpVal">--</div>
-          <div class="result-ci" id="bnpCI"></div>
-          <div class="result-name">NT-proBNP</div>
-          <div class="result-p" id="bnpP"></div>
-        </div>
         <div class="result-box neutral">
           <div class="result-val gray" id="respRate">--</div>
           <div class="result-ci"></div>
@@ -188,11 +182,6 @@
 
       <div id="insightArea"></div>
 
-      <div class="paradox-box" id="paradoxBox" style="display:none;">
-        <div class="title">The FOOD-1 Paradox</div>
-        <p>In the trial, <span class="paradox-stat">51%</span> of participants were "dual responders" whose LDL and TMAO both improved on the plant diet. Paradoxically, these same responders showed the <em>largest</em> NT-proBNP increase <span class="paradox-stat">+0.35 log units, p=0.005</span> vs non-responders <span class="paradox-stat">+0.02, p=0.83</span>.</p>
-        <p style="margin-top:8px;">This likely reflects transient sodium/volume effects from processed plant products, not cardiac harm. Adherence was identical between groups (5% deviation rate in both).</p>
-      </div>
     </div>
   </div>
 
@@ -371,10 +360,6 @@ function update() {
   document.getElementById('tmaoCI').textContent = 'Significant reduction in FOOD-1';
   document.getElementById('tmaoP').textContent = 'Consistent across all subgroups';
 
-  // BNP — already in relative % (converted from log)
-  document.getElementById('bnpVal').textContent = '+' + bnpPct.toFixed(0) + '% relative';
-  document.getElementById('bnpCI').textContent = 'CI: ' + (bnpPctLo > 0 ? '+' : '') + bnpPctLo.toFixed(0) + '% to +' + bnpPctHi.toFixed(0) + '% (log: +' + bnpScaled.d.toFixed(2) + ')';
-  document.getElementById('bnpP').textContent = fmtP(bnp.p) + ' (n=' + bnp.n + ', age ' + prof.age + ')';
 
   // Responder rate
   document.getElementById('respRate').textContent = '51%';
@@ -382,7 +367,6 @@ function update() {
   // Forest plot
   const forestItems = [
     { label: 'LDL-C', d: ldlPct, lo: ldlPctLo, hi: ldlPctHi, color: 'green', unit: '%' },
-    { label: 'NT-proBNP', d: bnpPct, lo: bnpPctLo, hi: bnpPctHi, color: 'amber', unit: '%' },
   ];
   buildForest(forestItems, 'forestPlot');
 
@@ -408,7 +392,7 @@ function update() {
   } else if (prof.htn === 'yes') {
     insight = `<div class="insight-box amber">
       <div class="insight-title">Modest Response Expected</div>
-      Participants with hypertension showed a smaller LDL effect (-1.9 mg/dL, p=0.47) compared to normotensives (-7.3 mg/dL, p=0.007). Sodium content in processed plant-based products is worth monitoring, especially given the NT-proBNP signal.
+      Participants with hypertension showed a smaller LDL effect (-1.9 mg/dL, p=0.47) compared to normotensives (-7.3 mg/dL, p=0.007). TMAO reduction remained consistent. Sodium content in processed plant-based products is worth monitoring.
     </div>`;
   } else {
     insight = `<div class="insight-box green">
@@ -418,8 +402,6 @@ function update() {
   }
   area.innerHTML = insight;
 
-  // Show paradox box when swaps > 3
-  document.getElementById('paradoxBox').style.display = swaps >= 4 ? 'block' : 'none';
 }
 
 // Init
